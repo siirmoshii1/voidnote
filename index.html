@@ -5,6 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Onyx | Hacker Notes</title>
+
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+
     <style>
         /* === NEO-BRUTALIST THEME === */
         :root {
@@ -22,7 +26,6 @@
             margin: 0;
             padding: 0;
             font-family: 'Courier New', Courier, monospace;
-            /* Edgy terminal font */
         }
 
         body {
@@ -31,7 +34,6 @@
             display: flex;
             height: 100vh;
             overflow: hidden;
-            /* Cool dot grid background */
             background-image: radial-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px);
             background-size: 20px 20px;
         }
@@ -154,7 +156,6 @@
             width: 100%;
         }
 
-        /* TOOLBAR (VIEW/EDIT BUTTONS) */
         .toolbar {
             display: flex;
             justify-content: space-between;
@@ -203,20 +204,25 @@
             transform: translate(-2px, -2px);
         }
 
-        .code-input,
-        .code-display {
+        .code-input {
             font-family: 'Courier New', Courier, monospace;
             min-height: 300px;
             line-height: 1.5;
         }
 
-        .code-display {
-            background: rgba(0, 0, 0, 0.8);
+        /* Styling the highlighted code block */
+        pre {
+            background: #000000 !important;
             border: 3px solid var(--border-color);
             padding: 25px;
-            white-space: pre-wrap;
-            overflow-x: auto;
             box-shadow: 6px 6px 0px rgba(255, 255, 255, 0.1);
+            overflow-x: auto;
+        }
+
+        code {
+            font-family: 'Courier New', Courier, monospace !important;
+            font-size: 1rem;
+            line-height: 1.6;
         }
 
         .explanation-input {
@@ -228,7 +234,6 @@
             line-height: 1.8;
             padding: 20px 0;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            /* Cleaner font just for reading notes */
         }
 
         .save-btn {
@@ -267,8 +272,9 @@
     <main class="main-content" id="mainContent">
     </main>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
     <script>
-        // === YOUR DATABASE URL ===
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxp__KxdBEv0_bKce_R29XCNzkkBTr89hRTZDqip2LBiCzSpIlnr1Dti9SAFFTkE0mq/exec';
 
         let notesData = [];
@@ -343,16 +349,24 @@
             setActiveSidebarItem(index);
 
             const main = document.getElementById('mainContent');
+
+            // Wrap the code block in <pre><code> so highlight.js can target it
             main.innerHTML = `
                 <div class="toolbar">
                     <div style="color:var(--text-dim); font-weight:bold;">${new Date(note.date).toLocaleString()}</div>
                     <button class="action-btn" onclick="editNote(${index})">EDIT LOG</button>
                 </div>
-                ${note.code ? `<div class="code-display">${escapeHTML(note.code)}</div>` : ''}
+                ${note.code ? `<pre><code>${escapeHTML(note.code)}</code></pre>` : ''}
                 <div class="explanation-display">
                     ${note.explanation.replace(/\n/g, '<br>')}
                 </div>
             `;
+
+            // Trigger syntax highlighting on the newly created code block
+            document.querySelectorAll('pre code').forEach((el) => {
+                hljs.highlightElement(el);
+            });
+
             main.scrollTo(0, 0);
         }
 
@@ -388,7 +402,6 @@
 
             let payload = { action: "new", title: "", code: code, explanation: explanation };
 
-            // If we are editing an existing note, tell the backend which row to update
             if (currentEditingIndex !== null) {
                 payload.action = "edit";
                 payload.sheetRow = notesData[currentEditingIndex].sheetRow;
@@ -399,8 +412,6 @@
                     method: 'POST',
                     body: JSON.stringify(payload)
                 });
-
-                // Refresh data to show changes
                 await fetchNotes();
 
             } catch (error) {
