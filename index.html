@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Onyx | Hacker Notes</title>
+    <style>
+        /* === NEO-BRUTALIST THEME === */
+        :root {
+            --bg-color: #050505;
+            --card-bg: #0a0a0a;
+            --text-color: #ffffff;
+            --text-dim: #999999;
+            --border-color: #ffffff;
+            --accent-active: #ffffff;
+            --sidebar-width: 350px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', Courier, monospace;
+            /* Edgy terminal font */
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            /* Cool dot grid background */
+            background-image: radial-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-color);
+            border-left: 2px solid var(--border-color);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--text-color);
+        }
+
+        /* === SIDEBAR === */
+        .sidebar {
+            width: var(--sidebar-width);
+            border-right: 3px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(5px);
+        }
+
+        .header {
+            padding: 30px 20px;
+            border-bottom: 3px solid var(--border-color);
+            font-weight: 900;
+            font-size: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .new-btn {
+            background: var(--text-color);
+            color: var(--bg-color);
+            border: 2px solid var(--text-color);
+            padding: 5px 15px;
+            cursor: pointer;
+            font-weight: 900;
+            font-size: 1.2rem;
+            box-shadow: 4px 4px 0px rgba(255, 255, 255, 0.3);
+            transition: all 0.1s ease;
+        }
+
+        .new-btn:active {
+            transform: translate(4px, 4px);
+            box-shadow: 0px 0px 0px transparent;
+        }
+
+        .notes-list {
+            flex: 1;
+            overflow-y: auto;
+            list-style: none;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .note-item {
+            padding: 15px;
+            background: var(--bg-color);
+            border: 2px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .note-item:hover {
+            transform: translate(-3px, -3px);
+            box-shadow: 5px 5px 0px var(--border-color);
+        }
+
+        .note-item.active {
+            background: var(--text-color);
+            color: var(--bg-color);
+            transform: translate(-3px, -3px);
+            box-shadow: 5px 5px 0px rgba(255, 255, 255, 0.5);
+        }
+
+        .note-item.active .note-item-date,
+        .note-item.active .note-item-preview {
+            color: var(--bg-color);
+            font-weight: bold;
+        }
+
+        .note-item-preview {
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .note-item-date {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }
+
+        /* === MAIN CONTENT === */
+        .main-content {
+            flex: 1;
+            padding: 50px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            max-width: 1000px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* TOOLBAR (VIEW/EDIT BUTTONS) */
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid var(--border-color);
+            padding-bottom: 15px;
+            margin-bottom: 10px;
+        }
+
+        .action-btn {
+            background: var(--bg-color);
+            color: var(--text-color);
+            border: 2px solid var(--border-color);
+            padding: 10px 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            letter-spacing: 1px;
+        }
+
+        .action-btn:hover {
+            background: var(--text-color);
+            color: var(--bg-color);
+        }
+
+        .action-btn:active {
+            transform: translateY(2px);
+        }
+
+        /* === INPUTS & DISPLAYS === */
+        textarea {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            border: 3px solid var(--border-color);
+            padding: 20px;
+            font-size: 1.1rem;
+            color: var(--text-color);
+            outline: none;
+            resize: vertical;
+            transition: all 0.2s ease;
+        }
+
+        textarea:focus {
+            box-shadow: 6px 6px 0px var(--border-color);
+            transform: translate(-2px, -2px);
+        }
+
+        .code-input,
+        .code-display {
+            font-family: 'Courier New', Courier, monospace;
+            min-height: 300px;
+            line-height: 1.5;
+        }
+
+        .code-display {
+            background: rgba(0, 0, 0, 0.8);
+            border: 3px solid var(--border-color);
+            padding: 25px;
+            white-space: pre-wrap;
+            overflow-x: auto;
+            box-shadow: 6px 6px 0px rgba(255, 255, 255, 0.1);
+        }
+
+        .explanation-input {
+            min-height: 200px;
+        }
+
+        .explanation-display {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            padding: 20px 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            /* Cleaner font just for reading notes */
+        }
+
+        .save-btn {
+            align-self: flex-start;
+            background: var(--text-color);
+            color: var(--bg-color);
+            border: none;
+            padding: 18px 40px;
+            font-size: 1.2rem;
+            font-weight: 900;
+            cursor: pointer;
+            text-transform: uppercase;
+            box-shadow: 6px 6px 0px rgba(255, 255, 255, 0.3);
+            transition: all 0.1s ease;
+        }
+
+        .save-btn:active {
+            transform: translate(6px, 6px);
+            box-shadow: 0px 0px 0px transparent;
+        }
+    </style>
+</head>
+
+<body>
+
+    <aside class="sidebar">
+        <div class="header">
+            SYSTEM.LOG
+            <button class="new-btn" onclick="createNewNote()">+ NEW</button>
+        </div>
+        <ul class="notes-list" id="notesList">
+            <div style="text-align:center; padding: 20px;">BOOTING DATABASE...</div>
+        </ul>
+    </aside>
+
+    <main class="main-content" id="mainContent">
+    </main>
+
+    <script>
+        // === YOUR DATABASE URL ===
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxp__KxdBEv0_bKce_R29XCNzkkBTr89hRTZDqip2LBiCzSpIlnr1Dti9SAFFTkE0mq/exec';
+
+        let notesData = [];
+        let currentEditingIndex = null;
+
+        window.onload = fetchNotes;
+
+        async function fetchNotes() {
+            try {
+                const response = await fetch(SCRIPT_URL);
+                notesData = await response.json();
+                renderNotesList();
+                if (notesData.length > 0) {
+                    viewNote(notesData.length - 1);
+                } else {
+                    createNewNote();
+                }
+            } catch (error) {
+                document.getElementById('notesList').innerHTML = '<div style="padding:20px; color:red;">ERROR CONNECTING.</div>';
+            }
+        }
+
+        function renderNotesList() {
+            const listContainer = document.getElementById('notesList');
+            listContainer.innerHTML = '';
+
+            notesData.slice().reverse().forEach((note, index) => {
+                const actualIndex = notesData.length - 1 - index;
+                const dateObj = new Date(note.date);
+                const dateString = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                let previewText = note.code ? note.code.substring(0, 40) : (note.explanation ? note.explanation.substring(0, 40) : "[ EMPTY RECORD ]");
+
+                const li = document.createElement('li');
+                li.className = 'note-item';
+                li.onclick = () => viewNote(actualIndex);
+
+                li.innerHTML = `
+                    <div class="note-item-preview">${escapeHTML(previewText)}...</div>
+                    <div class="note-item-date">${dateString}</div>
+                `;
+                listContainer.appendChild(li);
+            });
+        }
+
+        function setActiveSidebarItem(index) {
+            document.querySelectorAll('.note-item').forEach(el => el.classList.remove('active'));
+            const listItems = document.querySelectorAll('.note-item');
+            if (listItems[notesData.length - 1 - index]) {
+                listItems[notesData.length - 1 - index].classList.add('active');
+            }
+        }
+
+        function createNewNote() {
+            currentEditingIndex = null;
+            document.querySelectorAll('.note-item').forEach(el => el.classList.remove('active'));
+
+            const main = document.getElementById('mainContent');
+            main.innerHTML = `
+                <div class="toolbar">
+                    <h2 style="text-transform:uppercase;">[ NEW ENTRY ]</h2>
+                </div>
+                <textarea id="noteCode" class="code-input" placeholder="// Input system code here..."></textarea>
+                <textarea id="noteExplanation" class="explanation-input" placeholder="> Add logic explanation or notes..."></textarea>
+                <button class="save-btn" onclick="saveNote()" id="saveBtn">COMMIT SAVE</button>
+            `;
+            document.getElementById('noteCode').focus();
+        }
+
+        function viewNote(index) {
+            const note = notesData[index];
+            setActiveSidebarItem(index);
+
+            const main = document.getElementById('mainContent');
+            main.innerHTML = `
+                <div class="toolbar">
+                    <div style="color:var(--text-dim); font-weight:bold;">${new Date(note.date).toLocaleString()}</div>
+                    <button class="action-btn" onclick="editNote(${index})">EDIT LOG</button>
+                </div>
+                ${note.code ? `<div class="code-display">${escapeHTML(note.code)}</div>` : ''}
+                <div class="explanation-display">
+                    ${note.explanation.replace(/\n/g, '<br>')}
+                </div>
+            `;
+            main.scrollTo(0, 0);
+        }
+
+        function editNote(index) {
+            const note = notesData[index];
+            currentEditingIndex = index;
+            setActiveSidebarItem(index);
+
+            const main = document.getElementById('mainContent');
+            main.innerHTML = `
+                <div class="toolbar">
+                    <h2 style="color:var(--accent-active);">[ EDITING LOG ]</h2>
+                    <button class="action-btn" onclick="viewNote(${index})">CANCEL</button>
+                </div>
+                <textarea id="noteCode" class="code-input">${note.code}</textarea>
+                <textarea id="noteExplanation" class="explanation-input">${note.explanation}</textarea>
+                <button class="save-btn" onclick="saveNote()" id="saveBtn">OVERWRITE DATA</button>
+            `;
+        }
+
+        async function saveNote() {
+            const code = document.getElementById('noteCode').value;
+            const explanation = document.getElementById('noteExplanation').value;
+            const btn = document.getElementById('saveBtn');
+
+            if (!code && !explanation) {
+                alert("Cannot save empty log.");
+                return;
+            }
+
+            btn.innerText = "UPLOADING...";
+            btn.disabled = true;
+
+            let payload = { action: "new", title: "", code: code, explanation: explanation };
+
+            // If we are editing an existing note, tell the backend which row to update
+            if (currentEditingIndex !== null) {
+                payload.action = "edit";
+                payload.sheetRow = notesData[currentEditingIndex].sheetRow;
+            }
+
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+
+                // Refresh data to show changes
+                await fetchNotes();
+
+            } catch (error) {
+                alert("Upload failed. Check terminal.");
+                btn.innerText = "COMMIT SAVE";
+                btn.disabled = false;
+            }
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g,
+                tag => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    "'": '&#39;',
+                    '"': '&quot;'
+                }[tag])
+            );
+        }
+    </script>
+</body>
+
+</html>
